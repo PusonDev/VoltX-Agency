@@ -1,0 +1,211 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Light Mode Tokens */
+  --canvas: #FAFAF9;
+  --surface: #FFFFFF;
+  --surface-card: #FFFFFF;
+  --surface-muted: #F8FAFC;
+  --border-tech: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-dim: #94A3B8;
+  --slate-heavy: #0F172A;
+  --slate-body: #334155;
+  --slate-muted: #64748B;
+  --slate-dim: #94A3B8;
+  --volt-subtle: #E6FBF4;
+  --shadow-subtle: 0 0 0 1px #E2E8F0, 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+  --grid-color: rgba(226, 232, 240, 0.55);
+}
+
+.dark {
+  /* Dark Mode Tokens (Deep Cyber Obsidian & Neon Accents) */
+  --canvas: #080C14;
+  --surface: #0D1424;
+  --surface-card: #0F172A;
+  --surface-muted: #131C31;
+  --border-tech: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+  --slate-heavy: #F8FAFC;
+  --slate-body: #CBD5E1;
+  --slate-muted: #94A3B8;
+  --slate-dim: #64748B;
+  --volt-subtle: rgba(0, 229, 153, 0.14);
+  --shadow-subtle: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 20px -2px rgba(0, 0, 0, 0.6);
+  --grid-color: rgba(255, 255, 255, 0.04);
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Subtle Technical Grid Background */
+.bg-tech-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+}
+
+/* Precision Spotlight Card */
+.spotlight-card {
+  position: relative;
+  background: var(--surface-card);
+  border: 1px solid var(--border-tech);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  top: var(--mouse-y, -1000px);
+  left: var(--mouse-x, -1000px);
+  width: 320px;
+  height: 320px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(0, 229, 153, 0.14) 0%, rgba(0, 210, 180, 0.04) 40%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+.spotlight-card:hover {
+  border-color: rgba(0, 210, 180, 0.45);
+  box-shadow: 0 4px 25px -3px rgba(0, 0, 0, 0.12);
+}
+
+.dark .spotlight-card:hover {
+  border-color: rgba(0, 229, 153, 0.4);
+  box-shadow: 0 4px 30px -3px rgba(0, 229, 153, 0.15);
+}
+
+/* Radar Sweep Animation */
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar {
+  animation: radarSweep 4s linear infinite;
+  transform-origin: center;
+}
+
+/* Radar Blip Phosphor Effect: Invisible -> Flash upon sweep detection -> Fade back to invisible */
+@keyframes radarBlipSweep {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  2% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+  6% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  25% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  50% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  65%, 100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+}
+
+.animate-radar-blip {
+  animation: radarBlipSweep 4s linear infinite;
+}
+
+/* Volt Glow Effects */
+.volt-border-glow {
+  box-shadow: 0 0 0 1px #00E599, 0 0 16px -2px rgba(0, 229, 153, 0.35);
+}
+
+.volt-border-cyan-glow {
+  box-shadow: 0 0 0 1px #00D2B4, 0 0 20px -2px rgba(0, 210, 180, 0.4);
+}
+
+/* Glassmorphic HUD Card */
+.hud-card {
+  position: relative;
+  background: var(--surface-card);
+  border: 1px solid var(--border-tech);
+  border-radius: 8px;
+  backdrop-filter: blur(16px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hud-card:hover {
+  border-color: rgba(0, 210, 180, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 210, 180, 0.2);
+}
+
+.dark .hud-card:hover {
+  border-color: rgba(0, 229, 153, 0.4);
+  box-shadow: 0 8px 32px -4px rgba(0, 229, 153, 0.15), 0 0 0 1px rgba(0, 229, 153, 0.25);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--canvas);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-tech);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* Hide scrollbar for clean mobile swipe UI */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
