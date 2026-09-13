@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy, 
+  serverTimestamp 
+} from "firebase/firestore";
 import { voltxStore } from "@/lib/store";
 
 // Basic in-memory rate limiting map: IP -> array of timestamps
@@ -68,10 +78,10 @@ export async function POST(req: NextRequest) {
     const validChannels = ["Telegram", "WhatsApp", "Email", "Discord"];
     const preferredChannel = validChannels.includes(rawChannel) ? rawChannel : "Telegram";
 
-    // 4. Strict Validation Bounds
+    // 4. Strict Validation
     if (!clientEmail || !EMAIL_REGEX.test(clientEmail)) {
       return NextResponse.json(
-        { error: "A valid business or personal email address is strictly required." },
+        { error: "Valid corporate or professional email is required." },
         { status: 400 }
       );
     }
@@ -83,15 +93,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Record lead in Supabase or fallback in-memory/local store
+    // 5. Record lead in Firebase Firestore or fallback in-memory/local store
     let leadId = `lead-${Date.now().toString(36)}`;
     const targetSquad = voltxStore.getSquadBySlug(squadSlug);
     const squadName = targetSquad ? targetSquad.name : squadSlug || "General Ingestion";
 
-    if (supabase) {
-      const { data, error } = await supabase
-        .from("client_leads")
-        .insert({
+    if (db) {
+      try {
+        const docRef = await addDoc(collection(db, "client_leads"), {
           squad_slug: squadSlug,
           client_email: clientEmail,
           client_handle: clientHandle || null,
@@ -99,15 +108,21 @@ export async function POST(req: NextRequest) {
           budget_bracket: budgetBracket,
           preferred_channel: preferredChannel,
           lead_status: "New Lead",
-        })
-        .select()
-        .single();
-
-      if (data?.id) {
-        leadId = data.id;
-      }
-      if (error) {
-        console.warn("Supabase lead insertion warning:", error.message);
+          created_at: serverTimestamp(),
+        });
+        leadId = docRef.id;
+      } catch (error: any) {
+        console.warn("Firebase lead insertion warning:", error?.message || error);
+        const recorded = voltxStore.addLead({
+          squad_slug: squadSlug,
+          client_email: clientEmail,
+          client_handle: clientHandle,
+          project_scope: projectScope,
+          budget_bracket: budgetBracket,
+          preferred_channel: preferredChannel,
+          lead_status: "New Lead",
+        });
+        leadId = recorded.id;
       }
     } else {
       const recorded = voltxStore.addLead({
@@ -129,8 +144,10 @@ export async function POST(req: NextRequest) {
     if (resendApiKey && resendApiKey.startsWith("re_")) {
       try {
         const resend = new Resend(resendApiKey);
+        // Note: Unless voltx.agency domain is verified in Resend, onboarding@resend.dev is used for reliable testing
+        const fromEmail = process.env.RESEND_FROM_EMAIL || "VoltX Dispatch <onboarding@resend.dev>";
         await resend.emails.send({
-          from: "VoltX Dispatch <alerts@voltx.agency>",
+          from: fromEmail,
           to: ownerEmail,
           subject: `⚡ [VoltX Alert] New Project Scope: ${squadName} (${budgetBracket})`,
           html: `
@@ -179,7 +196,7 @@ export async function POST(req: NextRequest) {
 // Master passkey for API checks
 const MASTER_PIN = process.env.ADMIN_PIN || process.env.NEXT_PUBLIC_ADMIN_PIN || "voltx2026!secret";
 
-// GET /api/leads - Retrieve leads for authenticated admin
+// GET /api/leads - Protected endpoint to list leads
 export async function GET(req: NextRequest) {
   try {
     const cookieToken = req.cookies.get("voltx_admin_token")?.value;
@@ -194,18 +211,24 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (supabase) {
-      const { data, error } = await supabase
-        .from("client_leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+    if (db) {
+      try {
+        const leadsQuery = query(collection(db, "client_leads"), orderBy("created_at", "desc"));
+        const snapshot = await getDocs(leadsQuery);
+        const data = snapshot.docs.map((docSnap: any) => {
+          const item = docSnap.data();
+          return {
+            id: docSnap.id,
+            ...item,
+            created_at: item.created_at?.toDate ? item.created_at.toDate().toISOString() : new Date().toISOString(),
+          };
+        });
 
-      if (error) {
-        console.warn("Supabase fetch leads error:", error.message);
+        return NextResponse.json({ leads: data || [] });
+      } catch (error: any) {
+        console.warn("Firebase fetch leads error:", error?.message || error);
         return NextResponse.json({ leads: voltxStore.getLeads() });
       }
-
-      return NextResponse.json({ leads: data || [] });
     }
 
     return NextResponse.json({ leads: voltxStore.getLeads() });
@@ -250,14 +273,11 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    if (supabase) {
-      const { error } = await supabase
-        .from("client_leads")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.warn("Supabase lead deletion error:", error.message);
+    if (db) {
+      try {
+        await deleteDoc(doc(db, "client_leads", id));
+      } catch (error: any) {
+        console.warn("Firebase lead deletion error:", error?.message || error);
       }
     }
 
@@ -276,4 +296,3 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
-

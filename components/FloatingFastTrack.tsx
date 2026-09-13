@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Send, MessageCircle } from "lucide-react";
+import { trackTelegramClick } from "@/lib/telemetry";
 
 interface FloatingFastTrackProps {
   onOpenLeadModal: () => void;
@@ -35,6 +36,7 @@ export const FloatingFastTrack: React.FC<FloatingFastTrackProps> = ({ onOpenLead
           href="https://t.me/+8801629944975"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackTelegramClick("floating_widget")}
           className="relative flex items-center space-x-1.5 rounded-tech bg-surface text-slate-900 border-2 border-emerald-500 shadow-2xl hover:bg-emerald-50/40 dark:bg-slate-950 dark:text-white dark:border-volt-mint px-3 py-2 text-xs font-mono font-bold transition-all"
           title="Telegram SLA 15m"
         >

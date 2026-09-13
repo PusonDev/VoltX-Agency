@@ -17,6 +17,7 @@ import {
 import { SquadSlug } from "@/lib/types";
 import { voltxStore } from "@/lib/store";
 import { useToast } from "./Toast";
+import { trackTelegramClick, trackLeadSubmit } from "@/lib/telemetry";
 
 interface LeadFunnelModalProps {
   isOpen: boolean;
@@ -121,6 +122,9 @@ export const LeadFunnelModal: React.FC<LeadFunnelModalProps> = ({
         console.warn("Local lead store error:", storeErr);
       }
 
+      // Telemetry track lead event
+      trackLeadSubmit(squadSlug, budget);
+
       toast("DISPATCH CONFIRMED", "Technical brief routed to lead architects.", "success");
       setStep(3); // Success Screen
     } catch (err: any) {
@@ -136,6 +140,10 @@ export const LeadFunnelModal: React.FC<LeadFunnelModalProps> = ({
           lead_status: "New Lead",
         });
       } catch (e) {}
+
+      // Telemetry track lead event on offline/local fallback
+      trackLeadSubmit(squadSlug, budget);
+
       toast("DISPATCH QUEUED", "Brief prepared for immediate Telegram handoff.", "info");
       setStep(3);
     } finally {
@@ -344,6 +352,7 @@ export const LeadFunnelModal: React.FC<LeadFunnelModalProps> = ({
                   href="https://t.me/+8801629944975"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackTelegramClick("modal_step1", squadSlug)}
                   className="inline-flex items-center space-x-1 text-[11px] font-mono font-bold text-volt-cyan hover:underline"
                 >
                   <Send className="h-3 w-3" />
@@ -481,6 +490,7 @@ export const LeadFunnelModal: React.FC<LeadFunnelModalProps> = ({
                 href="https://t.me/+8801629944975"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackTelegramClick("success_modal", squadSlug)}
                 className="relative flex flex-col items-center justify-center rounded-tech-md bg-white border-2 border-emerald-500 text-slate-900 dark:bg-slate-950 dark:text-white dark:border-volt-mint p-5 text-center transition-all hover:bg-emerald-50/40 dark:hover:bg-slate-900 group shadow-lg"
               >
                 <div className="flex items-center space-x-2 font-mono text-xs text-emerald-700 dark:text-volt-mint font-semibold mb-1">

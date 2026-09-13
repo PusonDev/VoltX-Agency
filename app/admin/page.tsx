@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
     const currentLeads = voltxStore.getLeads();
     setLeads([...currentLeads]);
 
-    // Fetch and merge leads from server API / Supabase
+    // Fetch and merge leads from server API / Firebase Firestore
     try {
       const res = await fetch("/api/leads");
       if (res.ok) {

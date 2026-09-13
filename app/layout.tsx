@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ClientShell } from "@/components/ClientShell";
 import { JsonLd } from "@/components/JsonLd";
+import Analytics from "@/components/Analytics";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -105,6 +106,7 @@ export default function RootLayout({
         <JsonLd />
       </head>
       <body suppressHydrationWarning>
+        <Analytics />
         <ClientShell>{children}</ClientShell>
       </body>
     </html>
